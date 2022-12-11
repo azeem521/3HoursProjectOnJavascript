@@ -40,22 +40,43 @@ document.getElementById("form").innerHTML = form;
 
 //initialize to trap data
 let details = [];
-getData();
-table();
+load();
+// getData();
+// table();
 
 // to get data from local storage
-function getData() {
-  let data = localStorage.getItem("details");
-  if (data) {
-    details = JSON.parse(data);
-  } else {
-    setData();
+async function getData() {
+
+  let ax=axios.get('https://crudcrud.com/api/f83e8134ef864fce85a2bc9add091e45/exTracker').then((res)=>{
+    details=res.data
+    // console.log(details);
+  }).catch((er)=>console.log(er))
+  if(ax){
+    await ax
+  }else{
+    setData()
   }
+
+  // let data = localStorage.getItem("details");
+  // if (data) {
+  //   details = JSON.parse(data);
+  // } else {
+  //   setData();
+  // }
 }
 
 // to send data to local storage
-function setData() {
-  localStorage.setItem("details", JSON.stringify(details));
+function setData(e,c,d) {
+ axios.post('https://crudcrud.com/api/f83e8134ef864fce85a2bc9add091e45/exTracker',{
+  'expense':e.value,
+  'catagory':c,
+  'description':d.value
+ }).then((res)=>{
+  details=res.data
+ }).catch((er)=>console.log(er))
+
+
+  // localStorage.setItem("details", JSON.stringify(details));
 }
 
 // to save data function
@@ -71,9 +92,13 @@ function save() {
     description: description.value,
   };
   details.push(data);
-  setData();
+  setData(expense,catagory,description);
   // console.log(details);
   table();
+  load()
+  expense.value='';
+  description.value='';
+  
 }
 
 // Add detals table
@@ -124,7 +149,7 @@ function edit(index) {
     <label for="inputEmail4" class="form-label">Choose Expense</label>
     <div class="input-group mb-3">
     <span class="input-group-text">$</span>
-    <input type="number" class="form-control" id='newexpense' value=${details[index].expense} aria-label="Dollar amount (with dot and two decimal places)" placeholder='Enter Amount'>
+    <input type="number" class="form-control" id='newexpense' value='${details[index].expense}' aria-label="Dollar amount (with dot and two decimal places)" placeholder='Enter Amount'>
     
   </div>
     </div> 
@@ -146,7 +171,7 @@ function edit(index) {
     <div class="secondDiv">
     <div class="col">
     <label for="inputPassword4" class="form-label">Add Short Description</label>
-      <input type="text" class="form-control" id='newdescription' value=${details[index].description} placeholder="Description" aria-label="Last name">
+      <input type="text" class="form-control" id='newdescription' value='${details[index].description}' placeholder="Description" aria-label="Last name">
     </div>
     <button class="btn btn-primary mt-4 btn1" type="submit" onclick='update(${index})'>Update</button>
   
@@ -155,6 +180,17 @@ function edit(index) {
     `;
   document.getElementById("form").innerHTML = editForm;
 }
+// update data
+
+function updateData(e,c,d,id){
+  axios.patch('https://crudcrud.com/api/f83e8134ef864fce85a2bc9add091e45/exTracker'+id,{
+    'expense':e.value,
+    'catagory':c,
+    'description':d.value
+  }).then((res)=>{
+    details=res.data
+  }).catch((er)=>console.log(er))
+}
 
 // update function
 function update(index) {
@@ -162,19 +198,36 @@ function update(index) {
   let e = document.getElementById("newcatagory");
   let newcatagory = e.options[e.selectedIndex].text;
   let newdescription = document.getElementById("newdescription");
+  let id=details[index]._id
   details[index] = {
     expense: newexpense.value,
     catagory: newcatagory,
     description: newdescription.value,
   };
-  setData();
+  let exp=details[index].expense;
+  let cat=details[index].catagory;
+  let des=details[index].description
+  updateData(exp,cat,des,id)
+  // setData();
   table();
   document.getElementById("form").innerHTML = form;
 }
 
 // delete function
-function deleteData(index) {
-  details.splice(index, 1);
-  setData();
-  table();
+function deleteData(i) {
+  let id=details[i]._id;
+  axios.delete('https://crudcrud.com/api/f83e8134ef864fce85a2bc9add091e45/exTracker/'+id).then((res)=>{
+    details=res.data;
+    load()
+  }).catch((er)=>console.log(er,'id',id))
+  // details.splice(i, 1);
+  // setData();
+  // table();
+  
+}
+
+async function load(){
+  await getData()
+  await table()
+  console.log('loaded');
 }
